@@ -20,7 +20,7 @@ const int chipSelect = 10;
 
 HX711 scale(A2, A3);
 
-float totalWeight;
+float totalWeight, previousTotalWeight;
 float pickedUpThresh = -0.1;
 boolean pickedUp = true;
 
@@ -79,6 +79,8 @@ void loop() {
     //start new timer
 
   }
+
+ previousTotalWeight = totalWeight;
 }
 
 void logData(char *str, char *stat) {
