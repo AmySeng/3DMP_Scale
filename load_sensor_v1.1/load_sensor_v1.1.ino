@@ -20,16 +20,19 @@ const int chipSelect = 10;
 
 HX711 scale(A2, A3);
 
-float totalWeight, previousTotalWeight;
+float totalWeight, previousTotalWeight, measuredWeight;
 float pickedUpThresh = -0.1;
 boolean pickedUp = true;
+
+long lastDebounceTime = 0;
+long debounceDelay = 500;
 
 File logfile;
 
 void setup() {
-Serial.begin(38400);  
+  Serial.begin(38400);
 
- //---- Logging setup ----//
+  //---- Logging setup ----//
   // use debugging LEDs
   pinMode(redLEDpin, OUTPUT);
   pinMode(greenLEDpin, OUTPUT);
@@ -41,46 +44,37 @@ Serial.begin(38400);
 #if ECHO_TO_SERIAL
   Serial.println("millis,stamp,date,time,sensor name,status");
 #endif //ECHO_TO_SERIAL
-// hello!
+  // hello!
 
-//---- Scale setup ---//
+  //---- Scale setup ---//
   scale.read();
   scale.set_scale(2280.f);
-  scale.tare();  
+  scale.tare();
 
 }
 
 void loop() {
-  
-  totalWeight = scale.get_units(20),1;
 
-  if (totalWeight < pickedUpThresh ) {
+  detectChange();
 
-    if (pickedUp == true) {
-     // Serial.println("sensorTwo awake!");
-     // logData("sensorTwo", "pick");
+}
 
-     // if (totalWeight >= 150 && totalWeight <= 200){
-    
-    //}
-      pickedUp = false;
-    }
-    // start new timer
+void detectChange() {
+  totalWeight = scale.get_units(5), 1;
+  Serial.println(totalWeight);
+
+  if (totalWeight >= previousTotalWeight + 1.0 ||
+      totalWeight <= previousTotalWeight - 1.0) {
+    lastDebounceTime = millis();
+    Serial.println("different weight");
   }
 
-  if (totalWeight > pickedUpThresh ) {
-
-    if (pickedUp == false) {
-      //Serial.println("sensorTwo sleeping.");
-    //  logData("sensorTwo", "put");
-      pickedUp = true;
-    }
-
-    //start new timer
-
+  if (millis() - lastDebounceTime > debounceDelay) {
+    measuredWeight = totalWeight;
+    Serial.println("settled weight measured");
   }
 
- previousTotalWeight = totalWeight;
+  previousTotalWeight = totalWeight;
 }
 
 void logData(char *str, char *stat) {
@@ -167,7 +161,7 @@ void error(char *str)
 
   while (1);
 }
-  
+
 void initializeSD() {
 
   // initialize the SD card
