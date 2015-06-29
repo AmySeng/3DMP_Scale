@@ -55,11 +55,11 @@ void setup() {
 
 void loop() {
 
-  detectChange();
+ // detectChange();
 
 }
 
-void detectChange() {
+float detectChange() {
   totalWeight = scale.get_units(5), 1;
   Serial.println(totalWeight);
 
@@ -72,6 +72,7 @@ void detectChange() {
   if (millis() - lastDebounceTime > debounceDelay) {
     measuredWeight = totalWeight;
     Serial.println("settled weight measured");
+    return measuredWeight;
   }
 
   previousTotalWeight = totalWeight;
