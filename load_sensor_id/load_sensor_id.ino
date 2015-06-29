@@ -73,14 +73,14 @@ void checkObjects(){
   if (idWeight <= 39.5 && idWeight >= 32.5){
     Serial.println("Paint tube picked up!");
   }
-  else if (idWeight >= - 39.5 && idWeight <= -32.5){
+  else if (idWeight >= -39.5 && idWeight <= -32.5){
     Serial.println("Paint tube put back!");
   }
 
   if (idWeight <= 6.6 && idWeight >= 2.6){
     Serial.println("Spot tube picked up!");
   }
-   else if (idWeight >= -6.6 && idWeight <=-2.6){
+   else if (idWeight >= -6.6 && idWeight <= -2.6){
     Serial.println("Spot tube put back!");
    }
 }
