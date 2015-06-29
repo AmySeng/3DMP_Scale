@@ -44,7 +44,7 @@ void setup() {
 #if ECHO_TO_SERIAL
   Serial.println("millis,stamp,date,time,sensor name,status");
 #endif //ECHO_TO_SERIAL
-  // hello!
+
 
   //---- Scale setup ---//
   scale.read();
