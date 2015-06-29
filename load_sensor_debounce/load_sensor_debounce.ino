@@ -2,12 +2,13 @@
 
 HX711 scale(A2, A3);
 
-float totalWeight, previousTotalWeight, measuredWeight;
+float totalWeight, previousTotalWeight;
+float measuredWeight;
 float pickedUpThresh = -0.1;
 boolean pickedUp = true;
 
 long lastDebounceTime = 0;
-long debounceDelay = 500;
+long debounceDelay = 1000;
 
 void setup() {
 
@@ -20,27 +21,36 @@ void setup() {
 }
 
 void loop() {
-
-   Serial.println(detectChange());
+ 
+//  Serial.println("Detected Change:");
+detectChange();
 
    }
 
-float detectChange(){
+void detectChange(){
    totalWeight = scale.get_units(5),1;
-   Serial.println(totalWeight);
+  
+//   Serial.print("Total Weight: ");
    
-   if (totalWeight >= previousTotalWeight + 1.0 || 
-        totalWeight <= previousTotalWeight - 1.0){
+   
+   if (totalWeight > previousTotalWeight + 3.0 || 
+        totalWeight < previousTotalWeight - 3.0){
     lastDebounceTime = millis();
-    Serial.println("different weight");
+//    Serial.print("different weight: ");
+//    Serial.println(totalWeight);
    }
 
    if (millis() - lastDebounceTime > debounceDelay){
     measuredWeight = totalWeight;
-    Serial.println("settled weight measured");
-    return measuredWeight;
+    
+    Serial.print("settled weight measured: ");
+    Serial.println(measuredWeight);
+//    return measuredWeight;
 //    Serial.println(measuredWeight);
+   
+   }
 
    previousTotalWeight = totalWeight;
-   }
+//   Serial.print("Previous TotalWeight: ");
+//   Serial.println(previousTotalWeight);
 }
