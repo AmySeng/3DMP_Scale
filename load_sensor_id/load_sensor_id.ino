@@ -9,7 +9,7 @@ float pickedUpThresh = -0.1;
 boolean pickedUp = false;
 
 long lastDebounceTime = 0;
-long debounceDelay = 500;
+long debounceDelay = 250;
 
 void setup() {
 
@@ -57,11 +57,8 @@ void detectChange() {
       previousMeasuredWeight = measuredWeight;
       pickedUp = false;
     }
-
-
     //    return measuredWeight;
     //    Serial.println(measuredWeight);
-
   }
 
   previousTotalWeight = totalWeight;
@@ -70,17 +67,17 @@ void detectChange() {
 }
 
 void checkObjects(){
-  if (idWeight <= 39.5 && idWeight >= 32.5){
+  if (idWeight <= paintTube + 3 && idWeight >= paintTube - 3){
     Serial.println("Paint tube picked up!");
   }
-  else if (idWeight >= -39.5 && idWeight <= -32.5){
+  else if (idWeight >= -paintTube - 3 && idWeight <= -paintTube + 3){
     Serial.println("Paint tube put back!");
   }
 
-  if (idWeight <= 6.6 && idWeight >= 2.6){
+  if (idWeight <= spotTube + 3 && idWeight >= spotTube - 3){
     Serial.println("Spot tube picked up!");
   }
-   else if (idWeight >= -6.6 && idWeight <= -2.6){
+   else if (idWeight >= -spotTube - 3 && idWeight <= -spotTube + 3){
     Serial.println("Spot tube put back!");
    }
 }
