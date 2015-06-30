@@ -26,12 +26,19 @@ void setup() {
       lookup_cnt++;
     }
   }
+
+  lookup.debug();
   
   // FIND Subset
-  byte weight = 46;
+  byte weight = 15;
   Serial.print("Looking for: ");
   Serial.println(weight);
-  Serial.println(lookup.getValueOf(weight));
+  if (lookup.getValueOf(weight) == NULL) {
+    Serial.println("NULL!");
+  }
+  else {
+    Serial.println(lookup.getValueOf(weight));
+  }
   
 }
 
