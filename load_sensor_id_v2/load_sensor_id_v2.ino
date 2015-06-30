@@ -14,6 +14,14 @@ boolean pickedUp = false;
 long lastDebounceTime = 0;
 long debounceDelay = 250;
 
+  byte products[] = {
+    1, 1, 1, 3, 3, 3, 7, 7, 15, 15, 31, 31, 31
+  };
+  byte product_count = 13;
+
+  HashType<byte, char*> hashRawArray[77];
+  HashMap<byte, char*> lookup = HashMap<byte, char*>(hashRawArray, 77);
+
 void setup() {
 
   paintTube = 36.5;
@@ -67,22 +75,12 @@ void detectChange() {
 }
 
 boolean pick(float x){
-  float picked;
-  picked = x + abs(x);
-  if (picked > 0){
+  if (x > 0){
     return true;
   }
 }
 
 void checkObjects() {
-
-  byte products[] = {
-    1, 1, 1, 3, 3, 3, 7, 7, 15, 15, 31, 31, 31
-  };
-  byte product_count = 13;
-
-  HashType<byte, char*> hashRawArray[77];
-  HashMap<byte, char*> lookup = HashMap<byte, char*>(hashRawArray, 77);
 
   byte sum = 0;
   byte lookup_cnt = 0;
@@ -100,7 +98,7 @@ void checkObjects() {
     }
   }
 
-  objectWeight = byte(abs(idWeight / smallestWeight));
+  objectWeight = byte(abs(idWeight) / smallestWeight);
 
   if (lookup.getValueOf(objectWeight) != NULL) {
     //log picked up
