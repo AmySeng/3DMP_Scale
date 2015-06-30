@@ -7,20 +7,25 @@ float totalWeight, previousTotalWeight;
 float measuredWeight, previousMeasuredWeight, idWeight;
 float paintTube, spotTube, smallestWeight;
 float pickedUpThresh = -0.1;
-byte objectWeight;
 boolean movedForReal = false;
 boolean pickedUp = false;
 
 long lastDebounceTime = 0;
 long debounceDelay = 250;
 
-  byte products[] = {
-    1, 1, 1, 3, 3, 3, 7, 7, 15, 15, 31, 31, 31
-  };
-  byte product_count = 13;
+byte products[] = {
+  1, 1, 1, 3, 3, 3, 7, 7, 15, 15, 31, 31, 31
+};
+byte product_count = 13;
 
-  HashType<byte, char*> hashRawArray[77];
-  HashMap<byte, char*> lookup = HashMap<byte, char*>(hashRawArray, 77);
+float singleProducts[] = {
+  4.6, 36.5
+};
+
+float  singleProducts_count = 2;
+
+HashType<byte, char*> hashRawArray[77];
+HashMap<byte, char*> lookup = HashMap<byte, char*>(hashRawArray, 77);
 
 void setup() {
 
@@ -50,9 +55,9 @@ void detectChange() {
 
   if (totalWeight > previousTotalWeight + 3.0 ||
       totalWeight < previousTotalWeight - 3.0) {
-   
+
     lastDebounceTime = millis();
-    
+
     movedForReal = true;
   }
 
@@ -61,12 +66,12 @@ void detectChange() {
 
     if (movedForReal) {
       idWeight =  measuredWeight - previousMeasuredWeight;
-     
+
       pickedUp = pick(idWeight);
       checkObjects();
-      
+
       previousMeasuredWeight = measuredWeight;
-      
+
       movedForReal = false;
     }
   }
@@ -74,8 +79,8 @@ void detectChange() {
   previousTotalWeight = totalWeight;
 }
 
-boolean pick(float x){
-  if (x > 0){
+boolean pick(float x) {
+  if (x > 0) {
     return true;
   }
 }
@@ -84,11 +89,12 @@ void checkObjects() {
 
   byte sum = 0;
   byte lookup_cnt = 0;
+  byte objectWeight = 0;
 
   char subset[77][10];
 
-  for (byte i = 0; i < product_count - 1; i++) {
-    for (byte j = i + 1; j < product_count; j++) {
+  for (int i = 0; i < product_count - 1; i++) {
+    for (int j = i + 1; j < product_count; j++) {
       sum = products[i] + products[j];
       String middle = ", ";
       String subset_tmp = products[i] + middle + products[j];
@@ -98,48 +104,47 @@ void checkObjects() {
     }
   }
 
+
+// compare to the ratio
   objectWeight = byte(abs(idWeight) / smallestWeight);
 
+// look up values in table
   if (lookup.getValueOf(objectWeight) != NULL) {
     //log picked up
-    if (!pickedUp){
-    //log put back  
+    if (!pickedUp) {
+      //log put back
     }
   }
   else if (lookup.getValueOf(objectWeight + 1) != NULL) {
-   
-    if (!pickedUp){
-      
+
+    if (!pickedUp) {
+
     }
   }
   else if (lookup.getValueOf(objectWeight - 1) != NULL) {
-   
-    if (!pickedUp){
-      
+
+    if (!pickedUp) {
+
     }
 
   }
   else {
 
-    if (idWeight <= paintTube + 3 && idWeight >= paintTube - 3) {
-      Serial.println("Paint tube picked up!");
-    }
-    else if (idWeight >= -paintTube - 3 && idWeight <= -paintTube + 3) {
-      Serial.println("Paint tube put back!");
-    }
+    for (int i = 0; i < singleProducts_count; i++) {
 
-    if (idWeight <= spotTube + 3 && idWeight >= spotTube - 3) {
-      Serial.println("Spot tube picked up!");
-    }
-    else if (idWeight >= -spotTube - 3 && idWeight <= -spotTube + 3) {
-      Serial.println("Spot tube put back!");
-    }
-    else {
-      //something else has SERIOUSLY GONE WRONG
+      if (idWeight <= singleProducts[i] + 3 && idWeight >= singleProducts[i] - 3) {
+
+      }
+      else if (idWeight >= -singleProducts[i] - 3 && idWeight <= -singleProducts[i] + 3) {
+
+      }
+      else {
+        //something else has SERIOUSLY GONE WRONG
+      }
+
     }
 
   }
-
 
 }
 
