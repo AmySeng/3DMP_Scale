@@ -8,7 +8,7 @@ float measuredWeight, previousMeasuredWeight, idWeight;
 float paintTube, spotTube, smallestWeight;
 float pickedUpThresh = -0.1;
 byte objectWeight;
-boolean moved = false;
+boolean movedForReal = false;
 boolean pickedUp = false;
 
 long lastDebounceTime = 0;
@@ -45,13 +45,13 @@ void detectChange() {
    
     lastDebounceTime = millis();
     
-    moved = true;
+    movedForReal = true;
   }
 
   if (millis() - lastDebounceTime > debounceDelay) {
     measuredWeight = totalWeight;
 
-    if (moved) {
+    if (movedForReal) {
       idWeight =  measuredWeight - previousMeasuredWeight;
      
       pickedUp = pick(idWeight);
@@ -59,7 +59,7 @@ void detectChange() {
       
       previousMeasuredWeight = measuredWeight;
       
-      moved = false;
+      movedForReal = false;
     }
   }
 
@@ -103,17 +103,19 @@ void checkObjects() {
   objectWeight = byte(abs(idWeight / smallestWeight));
 
   if (lookup.getValueOf(objectWeight) != NULL) {
-    
+    //log picked up
     if (!pickedUp){
-      
+    //log put back  
     }
   }
   else if (lookup.getValueOf(objectWeight + 1) != NULL) {
+   
     if (!pickedUp){
       
     }
   }
   else if (lookup.getValueOf(objectWeight - 1) != NULL) {
+   
     if (!pickedUp){
       
     }
