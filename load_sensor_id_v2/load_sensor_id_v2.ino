@@ -9,6 +9,7 @@ float smallestWeight = 5.4;
 float pickedUpThresh = -0.1;
 boolean movedForReal = false;
 boolean pickedUp = false;
+boolean noSingleProducts = false;
 
 byte objectWeight = 0;
 byte objectWeightPlus = 1;
@@ -133,7 +134,6 @@ void checkObjects() {
 
 //checking for single products
 
-    boolean noSingleProducts = false;
 
     for (int i = 0; i < singleProducts_count; i++) {
 
@@ -148,7 +148,7 @@ void checkObjects() {
 
         }
         else {
-          noSingleProducts = true;
+          //noSingleProducts = true;
 
         }
       }
@@ -162,10 +162,11 @@ void checkObjects() {
         }
 
         else {
-          noSingleProducts = true;
+          //noSingleProducts = true;
 
         }
       }
+
 
 
     }
@@ -246,6 +247,8 @@ void checkObjects() {
 
     Serial.println();
   }
+
+  noSingleProducts = true;
 
   //  Serial.println("check objects");
 }
