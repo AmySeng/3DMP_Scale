@@ -198,7 +198,7 @@ void checkObjects() {
         }
 
         else {
-          Serial.println("didn't find a single product picked up, things are weird");
+          Serial.println("didn't find a single product put back, things are weird");
         }
       }
     }
