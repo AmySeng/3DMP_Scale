@@ -137,6 +137,7 @@ void checkObjects() {
       Serial.println("Picked Up");
       Serial.print("Object Weight: ");
       Serial.println(lookup.getValueOf(objectWeight));
+      Serial.println();
     }
 
 
@@ -144,6 +145,7 @@ void checkObjects() {
       Serial.println("Put Back");
       Serial.print("Object Weight: ");
       Serial.println(lookup.getValueOf(objectWeight));
+      Serial.println();
       //log put back
     }
   }
@@ -155,12 +157,14 @@ void checkObjects() {
       Serial.println("Picked Up");
       Serial.print("Object Weight: ");
       Serial.println(lookup.getValueOf(objectWeight));
+      Serial.println();
     }
 
     else {
       Serial.println("Put back");
       Serial.print("Object Weight: ");
       Serial.println(lookup.getValueOf(objectWeight));
+      Serial.println();
     }
   }
   else if (lookup.getValueOf(objectWeight - 1) != NULL) {
@@ -168,12 +172,14 @@ void checkObjects() {
       Serial.println("Picked Up");
       Serial.print("Object Weight: ");
       Serial.println(lookup.getValueOf(objectWeight));
+      Serial.println();
     }
 
     else {
       Serial.println("Put Back");
       Serial.print("Object Weight: ");
       Serial.println(lookup.getValueOf(objectWeight));
+      Serial.println();
     }
 
   }
@@ -222,5 +228,10 @@ boolean noSingleProducts = false;
   }
 
   //  Serial.println("check objects");
+}
+
+void weightDebug(){
+
+  
 }
 
