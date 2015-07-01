@@ -11,19 +11,19 @@ boolean movedForReal = false;
 boolean pickedUp = false;
 
 byte objectWeight = 0;
-byte objectWeightPlus = 0;
-byte objectWeightMinus = 0;
+byte objectWeightPlus = 1;
+byte objectWeightMinus = 2;
 
 long lastDebounceTime = 0;
 long debounceDelay = 500;
 
-byte products[] = {
-  1, 1, 1, 3, 3, 3, 7, 7, 7, 9, 9, 20, 20
-};
-byte product_count = 13;
 
-float singleProducts[] = {
-  5.6, 16.8, 38.32, 84, 173.6
+//float singleProducts[] = {
+//  5.6, 16.8, 38.32, 84, 173.6
+//};
+
+byte singleProducts[] = {
+  1, 3, 7, 9, 20
 };
 
 float  singleProducts_count = 5;
@@ -32,9 +32,12 @@ HashType<byte, char*> hashRawArray[77];
 HashMap<byte, char*> lookup = HashMap<byte, char*>(hashRawArray, 77);
 
 
-
 void setup() {
   Serial.begin(9600);
+  byte products[] = {
+    1, 1, 1, 3, 3, 3, 7, 7, 7, 9, 9, 20, 20
+  };
+  byte product_count = 13;
 
   byte sum = 0;
   byte lookup_cnt = 0;
@@ -117,10 +120,7 @@ boolean pick(float x) {
 
 void checkObjects() {
 
-
   //  Serial.println("in checkObjects");
-
-
   // compare to the ratio
   objectWeight = byte(idWeight / smallestWeight);
   objectWeightPlus = byte((idWeight / smallestWeight) - 1);
@@ -129,9 +129,60 @@ void checkObjects() {
 
   Serial.print("Ratio'd Object Weight: ");
   Serial.println(objectWeight);
+  // Serial.println(lookup.getValueOf(objectWeight));
+
+//checking for single products
+
+    boolean noSingleProducts = false;
+
+    for (int i = 0; i < singleProducts_count; i++) {
+
+      //      Serial.print("Single Product: ");
+      //      Serial.println(singleProducts[i]);
+
+      if (pickedUp) {
+        if (objectWeight == singleProducts[i]) {
+          Serial.print("Single Product Picked Up: ");
+          Serial.println(singleProducts[i]);
+          noSingleProducts = false;
+
+        }
+        else {
+          noSingleProducts = true;
+
+        }
+      }
+
+      else {
+        if ( objectWeight == singleProducts[i]) {
+          Serial.print("Single Product Put Back: ");
+          Serial.println(singleProducts[i]);
+          noSingleProducts = false;
+
+        }
+
+        else {
+          noSingleProducts = true;
+
+        }
+      }
+
+
+    }
+//
+//    if (pickedUp && noSingleProducts) {
+//      Serial.println("didn't find a single product picked up, things are weird");
+//      noSingleProducts = false;
+//    }
+//    else {
+//      Serial.println("didn't find a single product put back, things are weird");
+//      noSingleProducts = false;
+//    }
+
+
 
   // look up values in table
-  if (lookup.getValueOf(objectWeight) != NULL) {
+  if (noSingleProducts && lookup.getValueOf(objectWeight) != NULL) {
 
     if (pickedUp) {
       //log picked up
@@ -152,82 +203,48 @@ void checkObjects() {
   }
 
 
-  else if (lookup.getValueOf(objectWeightPlus) != NULL) {
-
-    if (pickedUp) {
-      Serial.print("Picked Up: ");
-      Serial.println(objectWeightPlus);
-      Serial.print("Object Weight - 1: ");
-      Serial.println(lookup.getValueOf(objectWeightPlus));
-      Serial.println();
+    else if (noSingleProducts && lookup.getValueOf(objectWeightPlus) != NULL) {
+  
+      if (pickedUp) {
+        Serial.print("Picked Up: ");
+        Serial.println(objectWeightPlus);
+        Serial.print("Object Weight - 1: ");
+        Serial.println(lookup.getValueOf(objectWeightPlus));
+        Serial.println();
+      }
+  
+      else {
+        Serial.print("Put back: ");
+        Serial.println(objectWeightPlus);
+        Serial.print("Object Weight - 1: ");
+        Serial.println(lookup.getValueOf(objectWeightPlus));
+        Serial.println();
+      }
     }
-
-    else {
-      Serial.print("Put back: ");
-      Serial.println(objectWeightPlus);
-      Serial.print("Object Weight - 1: ");
-      Serial.println(lookup.getValueOf(objectWeightPlus));
-      Serial.println();
+    else if ( noSingleProducts && lookup.getValueOf(objectWeightMinus) != NULL) {
+      if (pickedUp) {
+        Serial.print("Picked Up: ");
+        Serial.println(objectWeightMinus);
+        Serial.print("Object Weight + 1: ");
+        Serial.println(lookup.getValueOf(objectWeightMinus));
+        Serial.println();
+      }
+  
+      else {
+        Serial.print("Put Back: ");
+        Serial.println(objectWeightMinus);
+        Serial.print("Object Weight + 1: ");
+        Serial.println(lookup.getValueOf(objectWeightMinus));
+        Serial.println();
+      }
+  
     }
-  }
-  else if (lookup.getValueOf(objectWeightMinus) != NULL) {
-    if (pickedUp) {
-      Serial.println("Picked Up");
-      Serial.print("Object Weight + 1: ");
-      Serial.println(lookup.getValueOf(objectWeightMinus));
-      Serial.println();
-    }
-
-    else {
-      Serial.println("Put Back");
-      Serial.print("Object Weight + 1: ");
-      Serial.println(lookup.getValueOf(objectWeightMinus));
-      Serial.println();
-    }
-
-  }
   else {
 
-    Serial.println("inside single product loop");
+    //Serial.println("inside single product loop");
 
-    boolean noSingleProducts = false;
 
-    for (int i = 0; i < singleProducts_count; i++) {
-
-      //      Serial.print("Single Product: ");
-      //      Serial.println(singleProducts[i]);
-
-      if (pickedUp) {
-        if (idWeight <= singleProducts[i] + 3 && idWeight >= singleProducts[i] - 3) {
-          Serial.println("found single product picked up");
-          noSingleProducts = false;
-        }
-        else {
-          noSingleProducts = true;
-        }
-      }
-
-      else {
-        if ( idWeight <= singleProducts[i] + 3 && idWeight >= singleProducts[i] - 3) {
-          Serial.println("found single product put back");
-          noSingleProducts = false;
-        }
-
-        else {
-          noSingleProducts = true;
-        }
-      }
-    }
-
-    if (pickedUp && noSingleProducts) {
-      Serial.println("didn't find a single product picked up, things are weird");
-      noSingleProducts = false;
-    }
-    else {
-      Serial.println("didn't find a single product put back, things are weird");
-      noSingleProducts = false;
-    }
-
+    Serial.println();
   }
 
   //  Serial.println("check objects");
