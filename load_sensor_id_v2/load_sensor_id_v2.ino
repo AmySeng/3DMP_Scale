@@ -29,21 +29,21 @@ byte singleProducts[] = {
 
 float  singleProducts_count = 5;
 
-HashType<byte, char*> hashRawArray[77];
-HashMap<byte, char*> lookup = HashMap<byte, char*>(hashRawArray, 77);
+HashType<byte, char*> hashRawArray[78];
+HashMap<byte, char*> lookup = HashMap<byte, char*>(hashRawArray, 78);
 
 
 void setup() {
   Serial.begin(9600);
   byte products[] = {
-    1, 1, 1, 3, 3, 3, 7, 7, 7, 9, 9, 20, 20
+    20, 20, 1, 3, 3, 3, 7, 7, 7, 9, 9, 1, 1
   };
   byte product_count = 13;
 
   byte sum = 0;
   byte lookup_cnt = 0;
 
-  char subset[77][10];
+  char subset[78][10];
 
   for (byte i = 0; i < product_count - 1; i++) {
     for (byte j = i + 1; j < product_count; j++) {
@@ -55,6 +55,8 @@ void setup() {
       lookup_cnt++;
     }
   }
+
+  lookup.debug();
 
   //---- Scale setup ---//
   scale.read();
@@ -253,8 +255,4 @@ void checkObjects() {
   //  Serial.println("check objects");
 }
 
-void weightDebug() {
-
-
-}
 
