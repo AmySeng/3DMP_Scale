@@ -10,13 +10,13 @@ float smallestWeight;
 boolean pickedUp = false;
 
 long lastDebounceTime = 0;
-long debounceDelay = 250;
+long debounceDelay = 500;
 
 void setup() {
 
   paintTube = 36.5;
-  spotTube = 4.6;
-  smallestWeight = 4.6;
+  spotTube = 5.8;
+  smallestWeight = 5.4;
 
   Serial.begin(9600);
   //---- Scale setup ---//

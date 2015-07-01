@@ -14,15 +14,15 @@ long lastDebounceTime = 0;
 long debounceDelay = 500;
 
 byte products[] = {
-  1, 1, 1, 3, 3, 3, 7, 7, 15, 15, 31, 31, 31
+  1, 1, 1, 3, 3, 3, 7, 7, 15, 15, 15, 20, 20
 };
 byte product_count = 13;
 
 float singleProducts[] = {
-  4.6, 36.5, 20
+  5.6, 16.8, 38.32, 84, 173.6
 };
 
-float  singleProducts_count = 3;
+float  singleProducts_count = 5;
 
 HashType<byte, char*> hashRawArray[77];
 HashMap<byte, char*> lookup = HashMap<byte, char*>(hashRawArray, 77);
@@ -31,9 +31,7 @@ HashMap<byte, char*> lookup = HashMap<byte, char*>(hashRawArray, 77);
 
 void setup() {
 
-  paintTube = 36.5;
-  spotTube = 4.6;
-  smallestWeight = 4.6;
+  smallestWeight = 5.4;
 
   Serial.begin(9600);
 
@@ -62,10 +60,15 @@ void setup() {
 }
 
 void loop() {
-
+  
+  //the one function to rule them all.
   detectChange();
-
+  
 }
+
+
+
+
 
 void detectChange() {
 
@@ -133,14 +136,14 @@ void checkObjects() {
       //log picked up
       Serial.println("Picked Up");
       Serial.print("Object Weight: ");
-      Serial.println("objectWeight");
+      Serial.println(lookup.getValueOf(objectWeight));
     }
 
 
     else {
       Serial.println("Put Back");
       Serial.print("Object Weight: ");
-      Serial.println("objectWeight");
+      Serial.println(lookup.getValueOf(objectWeight));
       //log put back
     }
   }
@@ -151,32 +154,34 @@ void checkObjects() {
     if (pickedUp) {
       Serial.println("Picked Up");
       Serial.print("Object Weight: ");
-      Serial.println("objectWeight + 1");
+      Serial.println(lookup.getValueOf(objectWeight));
     }
 
     else {
       Serial.println("Put back");
       Serial.print("Object Weight: ");
-      Serial.println("objectWeight + 1");
+      Serial.println(lookup.getValueOf(objectWeight));
     }
   }
   else if (lookup.getValueOf(objectWeight - 1) != NULL) {
     if (pickedUp) {
       Serial.println("Picked Up");
       Serial.print("Object Weight: ");
-      Serial.println("objectWeight - 1");
+      Serial.println(lookup.getValueOf(objectWeight));
     }
 
     else {
       Serial.println("Put Back");
       Serial.print("Object Weight: ");
-      Serial.println("objectWeight - 1");
+      Serial.println(lookup.getValueOf(objectWeight));
     }
 
   }
   else {
 
     Serial.println("inside single product loop");
+
+boolean noSingleProducts = false;
 
     for (int i = 0; i < singleProducts_count; i++) {
 
@@ -186,21 +191,32 @@ void checkObjects() {
       if (pickedUp) {
         if (idWeight <= singleProducts[i] + 3 && idWeight >= singleProducts[i] - 3) {
           Serial.println("found single product picked up");
+          noSingleProducts = false;
         }
         else {
-          Serial.println("didn't find a single product picked up, things are weird");
+          noSingleProducts = true;
         }
       }
 
       else {
         if ( idWeight <= singleProducts[i] + 3 && idWeight >= singleProducts[i] - 3) {
           Serial.println("found single product put back");
+          noSingleProducts = false;
         }
-
+        
         else {
-          Serial.println("didn't find a single product put back, things are weird");
+          noSingleProducts = true;
         }
       }
+    }
+
+    if (pickedUp && noSingleProducts){
+      Serial.println("didn't find a single product picked up, things are weird");
+      noSingleProducts = false;
+    }
+    else{
+      Serial.println("didn't find a single product put back, things are weird");
+      noSingleProducts = false;
     }
 
   }
