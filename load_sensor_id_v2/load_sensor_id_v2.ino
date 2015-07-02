@@ -56,7 +56,7 @@ void setup() {
     }
   }
 
-  lookup.debug();
+  //lookup.debug();
 
   //---- Scale setup ---//
   scale.read();
@@ -146,6 +146,7 @@ void checkObjects() {
         if (objectWeight == singleProducts[i]) {
           Serial.print("Single Product Picked Up: ");
           Serial.println(singleProducts[i]);
+          Serial.println();
           noSingleProducts = false;
 
         }
@@ -159,6 +160,7 @@ void checkObjects() {
         if ( objectWeight == singleProducts[i]) {
           Serial.print("Single Product Put Back: ");
           Serial.println(singleProducts[i]);
+          Serial.println();
           noSingleProducts = false;
 
         }
@@ -168,8 +170,6 @@ void checkObjects() {
 
         }
       }
-
-
 
     }
 //
@@ -203,6 +203,7 @@ void checkObjects() {
       Serial.println();
       //log put back
     }
+    noSingleProducts = false;
   }
 
 
@@ -223,6 +224,7 @@ void checkObjects() {
         Serial.println(lookup.getValueOf(objectWeightPlus));
         Serial.println();
       }
+      noSingleProducts = false;
     }
     else if ( noSingleProducts && lookup.getValueOf(objectWeightMinus) != NULL) {
       if (pickedUp) {
@@ -240,13 +242,11 @@ void checkObjects() {
         Serial.println(lookup.getValueOf(objectWeightMinus));
         Serial.println();
       }
+      noSingleProducts = false;
   
     }
-  else {
-
-    //Serial.println("inside single product loop");
-
-
+  else if (noSingleProducts) {
+    Serial.println("unkown weight found");
     Serial.println();
   }
 
