@@ -1,6 +1,26 @@
 #include "HX711.h"
+#include <SD.h>
+#include <SPI.h>
+#include <Wire.h>
+#include "RTClib.h"
 #include <HashMap.h>
 
+//--setup SD Logging shield
+#define LOG_INTERVAL  1000
+#define SYNC_INTERVAL 1000
+uint32_t syncTime = 0;
+uint32_t m = 0;
+
+#define ECHO_TO_SERIAL   1
+
+#define redLEDpin 2
+#define greenLEDpin 3
+
+RTC_DS1307 RTC;
+
+const int chipSelect = 10;
+
+//--setup Scale
 HX711 scale(A2, A3);
 
 float totalWeight, previousTotalWeight;
@@ -16,7 +36,7 @@ byte objectWeightPlus = 1;
 byte objectWeightMinus = 2;
 
 long lastDebounceTime = 0;
-long debounceDelay = 500;
+int debounceDelay = 500;
 
 
 //float singleProducts[] = {
@@ -27,11 +47,12 @@ byte singleProducts[] = {
   1, 3, 7, 9, 20
 };
 
-byte  singleProducts_count = 5;
+byte singleProducts_count = 5;
 
 HashType<byte, char*> hashRawArray[78];
 HashMap<byte, char*> lookup = HashMap<byte, char*>(hashRawArray, 78);
 
+File logfile;
 
 void setup() {
   Serial.begin(9600);
@@ -55,6 +76,19 @@ void setup() {
       lookup_cnt++;
     }
   }
+
+  //---- Logging setup ----//
+  // use debugging LEDs
+  pinMode(redLEDpin, OUTPUT);
+  pinMode(greenLEDpin, OUTPUT);
+
+  initializeSD();
+  connectToRTC();
+
+  logfile.println("millis,stamp,date,time,sensor name,status");
+#if ECHO_TO_SERIAL
+  Serial.println("millis,stamp,date,time,sensor name,status");
+#endif //ECHO_TO_SERIAL
 
   //lookup.debug();
 
@@ -134,41 +168,41 @@ void checkObjects() {
   Serial.println(objectWeight);
   // Serial.println(lookup.getValueOf(objectWeight));
 
-//checking for single products
+  //checking for single products
 
 
-    for (int i = 0; i < singleProducts_count; i++) {
+  for (int i = 0; i < singleProducts_count; i++) {
 
-      if (pickedUp) {
-        if (objectWeight == singleProducts[i]) {
-          Serial.print("Single Product Picked Up: ");
-          Serial.println(singleProducts[i]);
-          Serial.println();
-          noSingleProducts = false;
+    if (pickedUp) {
+      if (objectWeight == singleProducts[i]) {
+        Serial.print("Single Product Picked Up: ");
+        Serial.println(singleProducts[i]);
+        Serial.println();
+        noSingleProducts = false;
 
-        }
-        else {
-          //noSingleProducts = true;
+      }
+      else {
+        //noSingleProducts = true;
 
-        }
+      }
+    }
+
+    else {
+      if ( objectWeight == singleProducts[i]) {
+        Serial.print("Single Product Put Back: ");
+        Serial.println(singleProducts[i]);
+        Serial.println();
+        noSingleProducts = false;
+
       }
 
       else {
-        if ( objectWeight == singleProducts[i]) {
-          Serial.print("Single Product Put Back: ");
-          Serial.println(singleProducts[i]);
-          Serial.println();
-          noSingleProducts = false;
+        //noSingleProducts = true;
 
-        }
-
-        else {
-          //noSingleProducts = true;
-
-        }
       }
-
     }
+
+  }
 
 
   // look up values in table
@@ -176,62 +210,68 @@ void checkObjects() {
 
     if (pickedUp) {
       //log picked up
-      Serial.println("Picked Up");
-      Serial.print("Object Weight: ");
-      Serial.println(lookup.getValueOf(objectWeight));
-      Serial.println();
+//      Serial.println("Picked Up");
+//      Serial.print("Object Weight: ");
+//      Serial.println(lookup.getValueOf(objectWeight));
+//      Serial.println();
+      scaleDebug("Picked Up: ", "Object Weight: ", objectWeight);
     }
 
 
     else {
-      Serial.println("Put Back");
-      Serial.print("Object Weight: ");
-      Serial.println(lookup.getValueOf(objectWeight));
-      Serial.println();
+//      Serial.println("Put Back");
+//      Serial.print("Object Weight: ");
+//      Serial.println(lookup.getValueOf(objectWeight));
+//      Serial.println();
+      scaleDebug("Put Back: ", "Object Weight: ", objectWeight);
       //log put back
     }
     noSingleProducts = false;
   }
 
 
-    else if (noSingleProducts && lookup.getValueOf(objectWeightPlus) != NULL) {
-  
-      if (pickedUp) {
-        Serial.print("Picked Up: ");
-        Serial.println(objectWeightPlus);
-        Serial.print("Object Weight - 1: ");
-        Serial.println(lookup.getValueOf(objectWeightPlus));
-        Serial.println();
-      }
-  
-      else {
-        Serial.print("Put back: ");
-        Serial.println(objectWeightPlus);
-        Serial.print("Object Weight - 1: ");
-        Serial.println(lookup.getValueOf(objectWeightPlus));
-        Serial.println();
-      }
-      noSingleProducts = false;
+  else if (noSingleProducts && lookup.getValueOf(objectWeightPlus) != NULL) {
+
+    if (pickedUp) {
+//      Serial.print("Picked Up: ");
+//      Serial.println(objectWeightPlus);
+//      Serial.print("Object Weight - 1: ");
+//      Serial.println(lookup.getValueOf(objectWeightPlus));
+//      Serial.println();
+      scaleDebug("Picked Up: ", "Object Weight - 1: ", objectWeightPlus);
     }
-    else if ( noSingleProducts && lookup.getValueOf(objectWeightMinus) != NULL) {
-      if (pickedUp) {
-        Serial.print("Picked Up: ");
-        Serial.println(objectWeightMinus);
-        Serial.print("Object Weight + 1: ");
-        Serial.println(lookup.getValueOf(objectWeightMinus));
-        Serial.println();
-      }
-  
-      else {
-        Serial.print("Put Back: ");
-        Serial.println(objectWeightMinus);
-        Serial.print("Object Weight + 1: ");
-        Serial.println(lookup.getValueOf(objectWeightMinus));
-        Serial.println();
-      }
-      noSingleProducts = false;
-  
+
+    else {
+//      Serial.print("Put back: ");
+//      Serial.println(objectWeightPlus);
+//      Serial.print("Object Weight - 1: ");
+//      Serial.println(lookup.getValueOf(objectWeightPlus));
+//      Serial.println();
+      scaleDebug("Put Back: ", "Object Weight - 1: ", objectWeightPlus);
     }
+    noSingleProducts = false;
+  }
+  else if ( noSingleProducts && lookup.getValueOf(objectWeightMinus) != NULL) {
+    if (pickedUp) {
+//      Serial.print("Picked Up: ");
+//      Serial.println(objectWeightMinus);
+//      Serial.print("Object Weight + 1: ");
+//      Serial.println(lookup.getValueOf(objectWeightMinus));
+//      Serial.println();
+      scaleDebug("Picked Up: ", "Object Weight + 1: ", objectWeightMinus);
+    }
+
+    else {
+//      Serial.print("Put Back: ");
+//      Serial.println(objectWeightMinus);
+//      Serial.print("Object Weight + 1: ");
+//      Serial.println(lookup.getValueOf(objectWeightMinus));
+//      Serial.println();
+      scaleDebug("Put Back: ", "Object Weight + 1: ", objectWeightMinus);
+    }
+    noSingleProducts = false;
+
+  }
   else if (noSingleProducts) {
     Serial.println("unkown weight found");
     Serial.println();
@@ -240,6 +280,145 @@ void checkObjects() {
   noSingleProducts = true;
 
   //  Serial.println("check objects");
+}
+
+void scaleDebug( char *state, char *objType, byte obj){
+      
+      Serial.println(state);
+      Serial.print(objType);
+      Serial.println(lookup.getValueOf(obj));
+      Serial.println();
+      
+}
+
+void logData(char *str, char *stat) {
+
+  DateTime now;
+
+  logfile.print(m);           // milliseconds since start
+  logfile.print(", ");
+
+#if ECHO_TO_SERIAL
+  Serial.print(m);         // milliseconds since start
+  Serial.print(", ");
+#endif
+
+  // fetch the time
+  now = RTC.now();
+
+  // log date
+  logfile.print(now.unixtime()); // seconds since 1/1/1970
+  logfile.print(", ");
+  logfile.print(now.year(), DEC);
+  logfile.print("/");
+  logfile.print(now.month(), DEC);
+  logfile.print("/");
+  logfile.print(now.day(), DEC);
+  logfile.print(", ");
+
+  //log time
+  logfile.print(now.hour(), DEC);
+  logfile.print(":");
+  logfile.print(now.minute(), DEC);
+  logfile.print(":");
+  logfile.print(now.second(), DEC);
+
+
+#if ECHO_TO_SERIAL
+  Serial.print(now.unixtime()); // seconds since 1/1/1970
+  Serial.print(", ");
+  Serial.print(now.year(), DEC);
+  Serial.print("/");
+  Serial.print(now.month(), DEC);
+  Serial.print("/");
+  Serial.print(now.day(), DEC);
+  Serial.print(", ");
+  Serial.print(now.hour(), DEC);
+  Serial.print(":");
+  Serial.print(now.minute(), DEC);
+  Serial.print(":");
+  Serial.print(now.second(), DEC);
+#endif //ECHO_TO_SERIAL
+
+  logfile.print(", ");
+  logfile.print(str);
+  logfile.print(", ");
+  logfile.println(stat);
+
+#if ECHO_TO_SERIAL
+  Serial.print(", ");
+  Serial.print(str);
+  Serial.print(", ");
+  Serial.println(stat);
+#endif ECHO_TO_SERIAL
+
+  digitalWrite(greenLEDpin, LOW);
+
+  // Now we write data to disk! Don't sync too often - requires 2048 bytes of I/O to SD card
+  // which uses a bunch of power and takes time
+  if ((millis() - syncTime) < SYNC_INTERVAL) return;
+  syncTime = millis();
+
+  // blink LED to show we are syncing data to the card & updating FAT!
+  digitalWrite(redLEDpin, HIGH);
+  logfile.flush();
+  digitalWrite(redLEDpin, LOW);
+}
+
+void error(char *str)
+{
+  Serial.print("error: ");
+  Serial.println(str);
+
+  // red LED indicates error
+  digitalWrite(redLEDpin, HIGH);
+
+  while (1);
+}
+
+void initializeSD() {
+
+  // initialize the SD card
+  Serial.print("Initializing SD card...");
+  // make sure that the default chip select pin is set to
+  // output, even if you don't use it:
+  pinMode(10, OUTPUT);
+
+  // see if the card is present and can be initialized:
+  if (!SD.begin(chipSelect)) {
+    error("Card failed, or not present");
+  }
+  Serial.println("card initialized.");
+
+  // create a new file
+  char filename[] = "3DMP00.CSV";
+  for (uint8_t i = 0; i < 100; i++) {
+    filename[4] = i / 10 + '0';
+    filename[5] = i % 10 + '0';
+    if (! SD.exists(filename)) {
+      // only open a new file if it doesn't exist
+      logfile = SD.open(filename, FILE_WRITE);
+      break;  // leave the loop!
+    }
+  }
+
+  if (! logfile) {
+    error("couldnt create file");
+  }
+
+  Serial.print("Logging to: ");
+  Serial.println(filename);
+}
+
+void connectToRTC() {
+  // connect to RTC
+  Wire.begin();
+  if (!RTC.begin()) {
+    logfile.println("RTC failed");
+#if ECHO_TO_SERIAL
+    Serial.println("RTC failed");
+#endif  //ECHO_TO_SERIAL
+  }
 }
 
 
