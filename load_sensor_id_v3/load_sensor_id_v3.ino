@@ -85,9 +85,9 @@ void setup() {
   initializeSD();
   connectToRTC();
 
-  logfile.println("millis,stamp,date,time,sensor name,status");
+  logfile.println("millis,stamp,date,time,single item,items,status");
 #if ECHO_TO_SERIAL
-  Serial.println("millis,stamp,date,time,sensor name,status");
+  Serial.println("millis,stamp,date,time,single item,items,status");
 #endif //ECHO_TO_SERIAL
 
   //lookup.debug();
@@ -170,7 +170,7 @@ void checkObjects() {
 
   //checking for single products
 
-
+  //  char singleProduct = '0';
   for (int i = 0; i < singleProducts_count; i++) {
 
     if (pickedUp) {
@@ -178,6 +178,7 @@ void checkObjects() {
         Serial.print("Single Product Picked Up: ");
         Serial.println(singleProducts[i]);
         Serial.println();
+        logData("single product", singleProducts[i], "pick");
         noSingleProducts = false;
 
       }
@@ -192,6 +193,7 @@ void checkObjects() {
         Serial.print("Single Product Put Back: ");
         Serial.println(singleProducts[i]);
         Serial.println();
+        logData("single product", singleProducts[i], "put");
         noSingleProducts = false;
 
       }
@@ -210,21 +212,23 @@ void checkObjects() {
 
     if (pickedUp) {
       //log picked up
-//      Serial.println("Picked Up");
-//      Serial.print("Object Weight: ");
-//      Serial.println(lookup.getValueOf(objectWeight));
-//      Serial.println();
+      //      Serial.println("Picked Up");
+      //      Serial.print("Object Weight: ");
+      //      Serial.println(lookup.getValueOf(objectWeight));
+      //      Serial.println();
       scaleDebug("Picked Up: ", "Object Weight: ", objectWeight);
+      logData(lookup.getValueOf(objectWeight), 0, "pick");
     }
 
 
     else {
-//      Serial.println("Put Back");
-//      Serial.print("Object Weight: ");
-//      Serial.println(lookup.getValueOf(objectWeight));
-//      Serial.println();
+      //      Serial.println("Put Back");
+      //      Serial.print("Object Weight: ");
+      //      Serial.println(lookup.getValueOf(objectWeight));
+      //      Serial.println();
       scaleDebug("Put Back: ", "Object Weight: ", objectWeight);
-      //log put back
+      logData(lookup.getValueOf(objectWeight), 0, "put");
+
     }
     noSingleProducts = false;
   }
@@ -233,41 +237,45 @@ void checkObjects() {
   else if (noSingleProducts && lookup.getValueOf(objectWeightPlus) != NULL) {
 
     if (pickedUp) {
-//      Serial.print("Picked Up: ");
-//      Serial.println(objectWeightPlus);
-//      Serial.print("Object Weight - 1: ");
-//      Serial.println(lookup.getValueOf(objectWeightPlus));
-//      Serial.println();
+      //      Serial.print("Picked Up: ");
+      //      Serial.println(objectWeightPlus);
+      //      Serial.print("Object Weight - 1: ");
+      //      Serial.println(lookup.getValueOf(objectWeightPlus));
+      //      Serial.println();
       scaleDebug("Picked Up: ", "Object Weight - 1: ", objectWeightPlus);
+      logData(lookup.getValueOf(objectWeightPlus), 0, "pick");
     }
 
     else {
-//      Serial.print("Put back: ");
-//      Serial.println(objectWeightPlus);
-//      Serial.print("Object Weight - 1: ");
-//      Serial.println(lookup.getValueOf(objectWeightPlus));
-//      Serial.println();
+      //      Serial.print("Put back: ");
+      //      Serial.println(objectWeightPlus);
+      //      Serial.print("Object Weight - 1: ");
+      //      Serial.println(lookup.getValueOf(objectWeightPlus));
+      //      Serial.println();
       scaleDebug("Put Back: ", "Object Weight - 1: ", objectWeightPlus);
+      logData(lookup.getValueOf(objectWeightPlus), 0, "put");
     }
     noSingleProducts = false;
   }
   else if ( noSingleProducts && lookup.getValueOf(objectWeightMinus) != NULL) {
     if (pickedUp) {
-//      Serial.print("Picked Up: ");
-//      Serial.println(objectWeightMinus);
-//      Serial.print("Object Weight + 1: ");
-//      Serial.println(lookup.getValueOf(objectWeightMinus));
-//      Serial.println();
+      //      Serial.print("Picked Up: ");
+      //      Serial.println(objectWeightMinus);
+      //      Serial.print("Object Weight + 1: ");
+      //      Serial.println(lookup.getValueOf(objectWeightMinus));
+      //      Serial.println();
       scaleDebug("Picked Up: ", "Object Weight + 1: ", objectWeightMinus);
+      logData(lookup.getValueOf(objectWeightMinus), 0, "pick");
     }
 
     else {
-//      Serial.print("Put Back: ");
-//      Serial.println(objectWeightMinus);
-//      Serial.print("Object Weight + 1: ");
-//      Serial.println(lookup.getValueOf(objectWeightMinus));
-//      Serial.println();
+      //      Serial.print("Put Back: ");
+      //      Serial.println(objectWeightMinus);
+      //      Serial.print("Object Weight + 1: ");
+      //      Serial.println(lookup.getValueOf(objectWeightMinus));
+      //      Serial.println();
       scaleDebug("Put Back: ", "Object Weight + 1: ", objectWeightMinus);
+      logData(lookup.getValueOf(objectWeightMinus), 0, "put");
     }
     noSingleProducts = false;
 
@@ -275,6 +283,13 @@ void checkObjects() {
   else if (noSingleProducts) {
     Serial.println("unkown weight found");
     Serial.println();
+    if (pickedUp){
+      logData("unknown weight", idWeight, "pick");
+    }
+    else{
+      logData("unknown weight", idWeight, "put");
+    }
+    
   }
 
   noSingleProducts = true;
@@ -282,16 +297,8 @@ void checkObjects() {
   //  Serial.println("check objects");
 }
 
-void scaleDebug( char *state, char *objType, byte obj){
-      
-      Serial.println(state);
-      Serial.print(objType);
-      Serial.println(lookup.getValueOf(obj));
-      Serial.println();
-      
-}
 
-void logData(char *str, char *stat) {
+void logData(char *str, byte single, char *stat) {
 
   DateTime now;
 
@@ -342,6 +349,8 @@ void logData(char *str, char *stat) {
 
   logfile.print(", ");
   logfile.print(str);
+  logfile.print(", ");
+    logfile.print(single);
   logfile.print(", ");
   logfile.println(stat);
 
@@ -419,6 +428,15 @@ void connectToRTC() {
     Serial.println("RTC failed");
 #endif  //ECHO_TO_SERIAL
   }
+}
+
+void scaleDebug( char *state, char *objType, byte obj) {
+
+  Serial.println(state);
+  Serial.print(objType);
+  Serial.println(lookup.getValueOf(obj));
+  Serial.println();
+
 }
 
 
