@@ -1,11 +1,15 @@
 #include "HX711.h"
+/*
 #include <SD.h>
 #include <SPI.h>
 #include <Wire.h>
 #include "RTClib.h"
-#include <HashMap.h>
-#include <avr/pgmspace.h>
+*/
 
+#include <HashMap.h>
+#include <EEPROM.h>
+
+/*
 //--setup SD Logging shield
 #define LOG_INTERVAL  1000
 #define SYNC_INTERVAL 1000
@@ -20,6 +24,8 @@ uint32_t m = 0;
 RTC_DS1307 RTC;
 
 const int chipSelect = 10;
+*/
+
 
 //--setup Scale
 HX711 scale(A2, A3);
@@ -38,32 +44,66 @@ boolean noSingleProducts = false;
 
 //long lastDebounceTime = 0;
 
+byte eeprom_address = 0;
+/*
 byte singleProducts[] = {
   1, 3, 7, 9, 20
 };
-
+*/
 const byte singleProducts_count = 5;
 
-byte products[] = {
+byte products_address;
+byte singleProducts_address;
+/*
+byte products[]  = {
   20, 20, 1, 3, 3, 3, 7, 7, 7, 9, 9, 1, 1
 };
+*/
 
-HashType<byte, char*> hashRawArray[78];
-HashMap<byte, char*> lookup = HashMap<byte, char*>(hashRawArray, 78);
+//HashType<byte, char*> hashRawArray[78];
+//HashMap<byte, char*> lookup = HashMap<byte, char*>(hashRawArray, 78);
 
-File logfile;
+// File logfile;
 
 void setup() {
   Serial.begin(9600);
-
-  Serial.println("at");
-
+  byte tmp[13];
   byte sum = 0;
   byte lookup_cnt = 0;
   byte product_count = 13;
 
-  char subset[78][10];
+  // create products array
+  byte products[]  = {
+    20, 20, 1, 3, 3, 3, 7, 7, 7, 9, 9, 1, 1
+  };
+  products_address = eeprom_address;
+  EEPROM.put(products_address, products);
+  eeprom_address += sizeof(products);
 
+  // create single products array
+  byte singleProducts[] = {
+    1, 3, 7, 9, 20
+  };
+  singleProducts_address = eeprom_address;
+  EEPROM.put(singleProducts_address, singleProducts);
+  eeprom_address += sizeof(singleProducts);
+
+  Serial.println();
+  EEPROM.get(singleProducts_address, tmp);
+  for (byte i = 0; i < 5; i++) {
+    //EEPROM.get(singleProducts_address + i, tmp);
+    Serial.println(tmp[i]);
+  }
+
+  Serial.println();
+  EEPROM.get(products_address, tmp);
+  for (byte i = 0; i < 13; i++) {
+    //EEPROM.get(products_address + i, tmp);
+    Serial.println(tmp[i]);
+  }
+
+  char subset[78][10];
+/*
   for (byte i = 0; i < product_count - 1; i++) {
     for (byte j = i + 1; j < product_count; j++) {
       sum = products[i] + products[j];
@@ -75,15 +115,15 @@ void setup() {
     }
   }
 
-  Serial.println(F("1: done creating lookup table"));
-
+  lookup.debug();
+/*
   //---- Logging setup ----//
   // use debugging LEDs
   pinMode(redLEDpin, OUTPUT);
   pinMode(greenLEDpin, OUTPUT);
 
-  //initializeSD();
-  //connectToRTC();
+  initializeSD();
+  connectToRTC();
 
   logfile.println("millis,stamp,date,time,item,items,status");
 
@@ -98,10 +138,14 @@ void setup() {
   scale.set_scale(2280.f);
   scale.tare();
   Serial.println(F("3: done setting up scale"));
+  */
 }
 
-void loop() {
 
+
+
+void loop() {
+/*
   digitalWrite(greenLEDpin, HIGH);
 
   // log milliseconds since starting
@@ -111,8 +155,11 @@ void loop() {
   //the one function to rule them all.
   detectChange();
   delay(50);
+*/
 }
 
+
+/*
 
 void detectChange() {
   long lastDebounceTime = 0;
@@ -124,8 +171,8 @@ void detectChange() {
   totalWeight = scale.get_units(5), 1;
   //  Serial.println(totalWeight);
 
-  if (totalWeight > previousTotalWeight + 3.0 ||
-      totalWeight < previousTotalWeight - 3.0) {
+  if (totalWeight > previousTotalWeight + 2.0 ||
+      totalWeight < previousTotalWeight - 2.0) {
     lastDebounceTime = millis();
     movedForReal = true;
   }
@@ -269,12 +316,12 @@ void logData( byte single, char *str, char *stat) {
 
   logfile.print(m);           // milliseconds since start
   logfile.print(", ");
-/*
+
 #if ECHO_TO_SERIAL
   Serial.print(m);         // milliseconds since start
   Serial.print(", ");
 #endif
-*/
+
   // fetch the time
   now = RTC.now();
 
@@ -398,7 +445,7 @@ void connectToRTC() {
   }
 }
 
-/*
+
 void scaleDebug( char *state, char *objType, byte obj) {
 
   Serial.println(state);
@@ -407,6 +454,6 @@ void scaleDebug( char *state, char *objType, byte obj) {
   Serial.println();
 
 }
-*/
 
+*/
 
