@@ -4,6 +4,7 @@
 #include <Wire.h>
 #include "RTClib.h"
 #include <HashMap.h>
+#include <avr/pgmspace.h>
 
 //--setup SD Logging shield
 #define LOG_INTERVAL  1000
@@ -24,9 +25,9 @@ const int chipSelect = 10;
 HX711 scale(A2, A3);
 
 
-float idWeight;
-const float smallestWeight = 5.4;
-float pickedUpThresh = -0.1;
+//float idWeight;
+//const float smallestWeight = 5.4;
+//float pickedUpThresh = -0.1;
 boolean movedForReal = false;
 boolean pickedUp = false;
 boolean noSingleProducts = false;
@@ -35,24 +36,17 @@ boolean noSingleProducts = false;
 //byte objectWeightPlus = 1;
 //byte objectWeightMinus = 1;
 
-long lastDebounceTime = 0;
+//long lastDebounceTime = 0;
 
-
-
-//float singleProducts[] = {
-//  5.6, 16.8, 38.32, 84, 173.6
-//};
-
-const byte singleProducts[] = {
+byte singleProducts[] = {
   1, 3, 7, 9, 20
 };
 
 const byte singleProducts_count = 5;
 
-const byte products[] = {
-    20, 20, 1, 3, 3, 3, 7, 7, 7, 9, 9, 1, 1
-  };
- const byte product_count = 13;
+byte products[] = {
+  20, 20, 1, 3, 3, 3, 7, 7, 7, 9, 9, 1, 1
+};
 
 HashType<byte, char*> hashRawArray[78];
 HashMap<byte, char*> lookup = HashMap<byte, char*>(hashRawArray, 78);
@@ -62,9 +56,11 @@ File logfile;
 void setup() {
   Serial.begin(9600);
 
-Serial.println("at setup");
+  Serial.println("at");
+
   byte sum = 0;
   byte lookup_cnt = 0;
+  byte product_count = 13;
 
   char subset[78][10];
 
@@ -79,36 +75,38 @@ Serial.println("at setup");
     }
   }
 
+  Serial.println(F("1: done creating lookup table"));
+
   //---- Logging setup ----//
   // use debugging LEDs
   pinMode(redLEDpin, OUTPUT);
   pinMode(greenLEDpin, OUTPUT);
 
-  initializeSD();
-  connectToRTC();
+  //initializeSD();
+  //connectToRTC();
 
   logfile.println("millis,stamp,date,time,item,items,status");
+
 #if ECHO_TO_SERIAL
   Serial.println(F("millis,stamp,date,time,item,items,status"));
 #endif //ECHO_TO_SERIAL
 
-  //lookup.debug();
+  Serial.println(F("2: done setting up logging"));
 
   //---- Scale setup ---//
   scale.read();
   scale.set_scale(2280.f);
   scale.tare();
-
-
+  Serial.println(F("3: done setting up scale"));
 }
 
 void loop() {
 
   digitalWrite(greenLEDpin, HIGH);
-  
+
   // log milliseconds since starting
   m = millis();
-  
+
 
   //the one function to rule them all.
   detectChange();
@@ -117,40 +115,33 @@ void loop() {
 
 
 void detectChange() {
-  
-  float measuredWeight, previousMeasuredWeight, 
-  totalWeight, previousTotalWeight;
+  long lastDebounceTime = 0;
+  float measuredWeight, previousMeasuredWeight,
+        totalWeight, previousTotalWeight;
   byte debounceDelay = 250;
+  float idWeight;
 
   totalWeight = scale.get_units(5), 1;
   //  Serial.println(totalWeight);
 
   if (totalWeight > previousTotalWeight + 3.0 ||
       totalWeight < previousTotalWeight - 3.0) {
-
     lastDebounceTime = millis();
-
     movedForReal = true;
   }
 
   if (millis() - lastDebounceTime > debounceDelay) {
     measuredWeight = totalWeight;
-
     if (movedForReal) {
-
       idWeight =  measuredWeight - previousMeasuredWeight;
       Serial.print("idWeight: ");
       Serial.println(idWeight);
-
       pickedUp = pick(idWeight);
 
       // keep positive
       idWeight = abs(idWeight);
-      checkObjects();
-
-
+      checkObjects(idWeight);
       previousMeasuredWeight = measuredWeight;
-
       movedForReal = false;
     }
   }
@@ -167,13 +158,13 @@ boolean pick(float x) {
   }
 }
 
-void checkObjects() {
-
+void checkObjects(float idWeight) {
+  float smallestWeight = 5.4;
   //  Serial.println("in checkObjects");
   // compare to the ratio
-byte  objectWeight = byte(idWeight / smallestWeight);
-byte  objectWeightPlus = byte((idWeight / smallestWeight) - 1);
-byte  objectWeightMinus = byte((idWeight / smallestWeight) + 1);
+  byte  objectWeight = byte(idWeight / smallestWeight);
+  byte  objectWeightPlus = byte((idWeight / smallestWeight) - 1);
+  byte  objectWeightMinus = byte((idWeight / smallestWeight) + 1);
 
 
   Serial.print(F("Ratio'd Object Weight: "));
@@ -214,13 +205,13 @@ byte  objectWeightMinus = byte((idWeight / smallestWeight) + 1);
   if (noSingleProducts && lookup.getValueOf(objectWeight) != NULL) {
 
     if (pickedUp) {
-//      scaleDebug("Picked Up: ", "Object Weight: ", objectWeight);
+      //      scaleDebug("Picked Up: ", "Object Weight: ", objectWeight);
       logData( 0, lookup.getValueOf(objectWeight), "pick");
     }
 
 
     else {
-//      scaleDebug("Put Back: ", "Object Weight: ", objectWeight);
+      //      scaleDebug("Put Back: ", "Object Weight: ", objectWeight);
       logData( 0, lookup.getValueOf(objectWeight), "put");
 
     }
@@ -231,32 +222,32 @@ byte  objectWeightMinus = byte((idWeight / smallestWeight) + 1);
   else if (noSingleProducts && lookup.getValueOf(objectWeightPlus) != NULL) {
 
     if (pickedUp) {
-//      scaleDebug("Picked Up: ", "Object Weight - 1: ", objectWeightPlus);
+      //      scaleDebug("Picked Up: ", "Object Weight - 1: ", objectWeightPlus);
       logData( 0, lookup.getValueOf(objectWeightPlus), "pick");
     }
 
     else {
-//      scaleDebug("Put Back: ", "Object Weight - 1: ", objectWeightPlus);
+      //      scaleDebug("Put Back: ", "Object Weight - 1: ", objectWeightPlus);
       logData( 0, lookup.getValueOf(objectWeightPlus), "put");
     }
     noSingleProducts = false;
   }
   else if ( noSingleProducts && lookup.getValueOf(objectWeightMinus) != NULL) {
     if (pickedUp) {
-//      scaleDebug("Picked Up: ", "Object Weight + 1: ", objectWeightMinus);
+      //      scaleDebug("Picked Up: ", "Object Weight + 1: ", objectWeightMinus);
       logData( 0, lookup.getValueOf(objectWeightMinus), "pick");
     }
 
     else {
-//      scaleDebug("Put Back: ", "Object Weight + 1: ", objectWeightMinus);
-      logData( 0, lookup.getValueOf(objectWeightMinus),"put");
+      //      scaleDebug("Put Back: ", "Object Weight + 1: ", objectWeightMinus);
+      logData( 0, lookup.getValueOf(objectWeightMinus), "put");
     }
     noSingleProducts = false;
 
   }
   else if (noSingleProducts) {
-//    Serial.println("unkown weight found");
-//    Serial.println();
+    //    Serial.println("unkown weight found");
+    //    Serial.println();
     if (pickedUp) {
       logData( idWeight, "unknown weight", "pick");
     }
@@ -278,12 +269,12 @@ void logData( byte single, char *str, char *stat) {
 
   logfile.print(m);           // milliseconds since start
   logfile.print(", ");
-
+/*
 #if ECHO_TO_SERIAL
   Serial.print(m);         // milliseconds since start
   Serial.print(", ");
 #endif
-
+*/
   // fetch the time
   now = RTC.now();
 
@@ -304,7 +295,6 @@ void logData( byte single, char *str, char *stat) {
   logfile.print(":");
   logfile.print(now.second(), DEC);
 
-
 #if ECHO_TO_SERIAL
   Serial.print(now.unixtime()); // seconds since 1/1/1970
   Serial.print(F(", "));
@@ -320,7 +310,6 @@ void logData( byte single, char *str, char *stat) {
   Serial.print(F(":"));
   Serial.print(now.second(), DEC);
 #endif //ECHO_TO_SERIAL
-
 
   logfile.print(", ");
   logfile.print(single);
@@ -401,12 +390,15 @@ void connectToRTC() {
   Wire.begin();
   if (!RTC.begin()) {
     logfile.println(F("RTC failed"));
-#if ECHO_TO_SERIAL
-    Serial.println(F("RTC failed"));
-#endif  //ECHO_TO_SERIAL
+   
+    #if ECHO_TO_SERIAL
+      Serial.println(F("RTC failed"));
+    #endif  //ECHO_TO_SERIAL
+    
   }
 }
 
+/*
 void scaleDebug( char *state, char *objType, byte obj) {
 
   Serial.println(state);
@@ -415,5 +407,6 @@ void scaleDebug( char *state, char *objType, byte obj) {
   Serial.println();
 
 }
+*/
 
 
