@@ -5,7 +5,7 @@ HX711 scale(A2, A3);
 
 float totalWeight, previousTotalWeight;
 float measuredWeight, previousMeasuredWeight, idWeight;
-float smallestWeight = 5.4;
+float smallestWeight = 3.5;
 float pickedUpThresh = -0.1;
 boolean movedForReal = false;
 boolean pickedUp = false;
@@ -79,8 +79,8 @@ void detectChange() {
   totalWeight = scale.get_units(5), 1;
   //  Serial.println(totalWeight);
 
-  if (totalWeight > previousTotalWeight + 3.0 ||
-      totalWeight < previousTotalWeight - 3.0) {
+  if (totalWeight > previousTotalWeight + 2.0 ||
+      totalWeight < previousTotalWeight - 2.0) {
 
     lastDebounceTime = millis();
 

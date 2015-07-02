@@ -16,7 +16,7 @@ void setup() {
 
   paintTube = 36.5;
   spotTube = 5.8;
-  smallestWeight = 5.4;
+  smallestWeight = 3.5;
 
   Serial.begin(9600);
   //---- Scale setup ---//
@@ -38,8 +38,8 @@ void detectChange() {
   totalWeight = scale.get_units(5), 1;
 
   //   Serial.print("Total Weight: ");
-  if (totalWeight > previousTotalWeight + 3.0 ||
-      totalWeight < previousTotalWeight - 3.0) {
+  if (totalWeight > previousTotalWeight + 2.0 ||
+      totalWeight < previousTotalWeight - 2.0) {
     lastDebounceTime = millis();
     pickedUp = true;
     //    Serial.print("different weight: ");
@@ -51,7 +51,7 @@ void detectChange() {
 
     if (pickedUp) {
       idWeight =  measuredWeight - previousMeasuredWeight;
-      checkObjects();
+      //checkObjects();
       
     byte objectWeight = 0;
     objectWeight = byte(abs(idWeight) / smallestWeight);
