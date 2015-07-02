@@ -85,9 +85,9 @@ void setup() {
   initializeSD();
   connectToRTC();
 
-  logfile.println("millis,stamp,date,time,single item,items,status");
+  logfile.println("millis,stamp,date,time,item,items,status");
 #if ECHO_TO_SERIAL
-  Serial.println("millis,stamp,date,time,single item,items,status");
+  Serial.println("millis,stamp,date,time,item,items,status");
 #endif //ECHO_TO_SERIAL
 
   //lookup.debug();
@@ -178,7 +178,7 @@ void checkObjects() {
         Serial.print("Single Product Picked Up: ");
         Serial.println(singleProducts[i]);
         Serial.println();
-        logData("single product", singleProducts[i], "pick");
+        logData( singleProducts[i], "single product", "pick");
         noSingleProducts = false;
 
       }
@@ -193,7 +193,7 @@ void checkObjects() {
         Serial.print("Single Product Put Back: ");
         Serial.println(singleProducts[i]);
         Serial.println();
-        logData("single product", singleProducts[i], "put");
+        logData( singleProducts[i], "single product", "put");
         noSingleProducts = false;
 
       }
@@ -217,7 +217,7 @@ void checkObjects() {
       //      Serial.println(lookup.getValueOf(objectWeight));
       //      Serial.println();
       scaleDebug("Picked Up: ", "Object Weight: ", objectWeight);
-      logData(lookup.getValueOf(objectWeight), 0, "pick");
+      logData( 0, lookup.getValueOf(objectWeight), "pick");
     }
 
 
@@ -227,7 +227,7 @@ void checkObjects() {
       //      Serial.println(lookup.getValueOf(objectWeight));
       //      Serial.println();
       scaleDebug("Put Back: ", "Object Weight: ", objectWeight);
-      logData(lookup.getValueOf(objectWeight), 0, "put");
+      logData( 0, lookup.getValueOf(objectWeight), "put");
 
     }
     noSingleProducts = false;
@@ -243,7 +243,7 @@ void checkObjects() {
       //      Serial.println(lookup.getValueOf(objectWeightPlus));
       //      Serial.println();
       scaleDebug("Picked Up: ", "Object Weight - 1: ", objectWeightPlus);
-      logData(lookup.getValueOf(objectWeightPlus), 0, "pick");
+      logData( 0, lookup.getValueOf(objectWeightPlus), "pick");
     }
 
     else {
@@ -253,7 +253,7 @@ void checkObjects() {
       //      Serial.println(lookup.getValueOf(objectWeightPlus));
       //      Serial.println();
       scaleDebug("Put Back: ", "Object Weight - 1: ", objectWeightPlus);
-      logData(lookup.getValueOf(objectWeightPlus), 0, "put");
+      logData( 0, lookup.getValueOf(objectWeightPlus), "put");
     }
     noSingleProducts = false;
   }
@@ -265,7 +265,7 @@ void checkObjects() {
       //      Serial.println(lookup.getValueOf(objectWeightMinus));
       //      Serial.println();
       scaleDebug("Picked Up: ", "Object Weight + 1: ", objectWeightMinus);
-      logData(lookup.getValueOf(objectWeightMinus), 0, "pick");
+      logData( 0, lookup.getValueOf(objectWeightMinus), "pick");
     }
 
     else {
@@ -275,7 +275,7 @@ void checkObjects() {
       //      Serial.println(lookup.getValueOf(objectWeightMinus));
       //      Serial.println();
       scaleDebug("Put Back: ", "Object Weight + 1: ", objectWeightMinus);
-      logData(lookup.getValueOf(objectWeightMinus), 0, "put");
+      logData( 0, lookup.getValueOf(objectWeightMinus),"put");
     }
     noSingleProducts = false;
 
@@ -283,13 +283,13 @@ void checkObjects() {
   else if (noSingleProducts) {
     Serial.println("unkown weight found");
     Serial.println();
-    if (pickedUp){
-      logData("unknown weight", idWeight, "pick");
+    if (pickedUp) {
+      logData( idWeight, "unknown weight", "pick");
     }
-    else{
-      logData("unknown weight", idWeight, "put");
+    else {
+      logData( idWeight, "unknown weight", "put");
     }
-    
+
   }
 
   noSingleProducts = true;
@@ -298,7 +298,7 @@ void checkObjects() {
 }
 
 
-void logData(char *str, byte single, char *stat) {
+void logData( byte single, char *str, char *stat) {
 
   DateTime now;
 
@@ -347,18 +347,21 @@ void logData(char *str, byte single, char *stat) {
   Serial.print(now.second(), DEC);
 #endif //ECHO_TO_SERIAL
 
+
+  logfile.print(", ");
+  logfile.print(single);
   logfile.print(", ");
   logfile.print(str);
-  logfile.print(", ");
-    logfile.print(single);
   logfile.print(", ");
   logfile.println(stat);
 
 #if ECHO_TO_SERIAL
-  Serial.print(", ");
-  Serial.print(str);
-  Serial.print(", ");
-  Serial.println(stat);
+  logfile.print(", ");
+  logfile.print(single);
+  logfile.print(", ");
+  logfile.print(str);
+  logfile.print(", ");
+  logfile.println(stat);
 #endif ECHO_TO_SERIAL
 
   digitalWrite(greenLEDpin, LOW);
