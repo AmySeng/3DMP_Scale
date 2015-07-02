@@ -23,20 +23,20 @@ const int chipSelect = 10;
 //--setup Scale
 HX711 scale(A2, A3);
 
-float totalWeight, previousTotalWeight;
-float measuredWeight, previousMeasuredWeight, idWeight;
+
+float idWeight;
 float smallestWeight = 5.4;
 float pickedUpThresh = -0.1;
 boolean movedForReal = false;
 boolean pickedUp = false;
 boolean noSingleProducts = false;
 
-byte objectWeight = 0;
-byte objectWeightPlus = 1;
-byte objectWeightMinus = 2;
+//byte objectWeight = 0;
+//byte objectWeightPlus = 1;
+//byte objectWeightMinus = 1;
 
 long lastDebounceTime = 0;
-int debounceDelay = 500;
+byte debounceDelay = 250;
 
 
 //float singleProducts[] = {
@@ -109,6 +109,8 @@ void loop() {
 
 
 void detectChange() {
+  
+  float measuredWeight, previousMeasuredWeight, totalWeight, previousTotalWeight;
 
   totalWeight = scale.get_units(5), 1;
   //  Serial.println(totalWeight);
@@ -159,9 +161,9 @@ void checkObjects() {
 
   //  Serial.println("in checkObjects");
   // compare to the ratio
-  objectWeight = byte(idWeight / smallestWeight);
-  objectWeightPlus = byte((idWeight / smallestWeight) - 1);
-  objectWeightMinus = byte((idWeight / smallestWeight) + 1);
+byte  objectWeight = byte(idWeight / smallestWeight);
+byte  objectWeightPlus = byte((idWeight / smallestWeight) - 1);
+byte  objectWeightMinus = byte((idWeight / smallestWeight) + 1);
 
 
   Serial.print("Ratio'd Object Weight: ");
@@ -171,35 +173,26 @@ void checkObjects() {
   //checking for single products
 
   //  char singleProduct = '0';
-  for (int i = 0; i < singleProducts_count; i++) {
+  for (byte i = 0; i < singleProducts_count; i++) {
 
     if (pickedUp) {
       if (objectWeight == singleProducts[i]) {
-        Serial.print("Single Product Picked Up: ");
-        Serial.println(singleProducts[i]);
-        Serial.println();
+//        Serial.print("Single Product Picked Up: ");
+//        Serial.println(singleProducts[i]);
+//        Serial.println();
         logData( singleProducts[i], "single product", "pick");
         noSingleProducts = false;
-
-      }
-      else {
-        //noSingleProducts = true;
 
       }
     }
 
     else {
       if ( objectWeight == singleProducts[i]) {
-        Serial.print("Single Product Put Back: ");
-        Serial.println(singleProducts[i]);
-        Serial.println();
+//        Serial.print("Single Product Put Back: ");
+//        Serial.println(singleProducts[i]);
+//        Serial.println();
         logData( singleProducts[i], "single product", "put");
         noSingleProducts = false;
-
-      }
-
-      else {
-        //noSingleProducts = true;
 
       }
     }
@@ -216,7 +209,7 @@ void checkObjects() {
       //      Serial.print("Object Weight: ");
       //      Serial.println(lookup.getValueOf(objectWeight));
       //      Serial.println();
-      scaleDebug("Picked Up: ", "Object Weight: ", objectWeight);
+//      scaleDebug("Picked Up: ", "Object Weight: ", objectWeight);
       logData( 0, lookup.getValueOf(objectWeight), "pick");
     }
 
@@ -226,7 +219,7 @@ void checkObjects() {
       //      Serial.print("Object Weight: ");
       //      Serial.println(lookup.getValueOf(objectWeight));
       //      Serial.println();
-      scaleDebug("Put Back: ", "Object Weight: ", objectWeight);
+//      scaleDebug("Put Back: ", "Object Weight: ", objectWeight);
       logData( 0, lookup.getValueOf(objectWeight), "put");
 
     }
@@ -242,7 +235,7 @@ void checkObjects() {
       //      Serial.print("Object Weight - 1: ");
       //      Serial.println(lookup.getValueOf(objectWeightPlus));
       //      Serial.println();
-      scaleDebug("Picked Up: ", "Object Weight - 1: ", objectWeightPlus);
+//      scaleDebug("Picked Up: ", "Object Weight - 1: ", objectWeightPlus);
       logData( 0, lookup.getValueOf(objectWeightPlus), "pick");
     }
 
@@ -252,7 +245,7 @@ void checkObjects() {
       //      Serial.print("Object Weight - 1: ");
       //      Serial.println(lookup.getValueOf(objectWeightPlus));
       //      Serial.println();
-      scaleDebug("Put Back: ", "Object Weight - 1: ", objectWeightPlus);
+//      scaleDebug("Put Back: ", "Object Weight - 1: ", objectWeightPlus);
       logData( 0, lookup.getValueOf(objectWeightPlus), "put");
     }
     noSingleProducts = false;
@@ -264,7 +257,7 @@ void checkObjects() {
       //      Serial.print("Object Weight + 1: ");
       //      Serial.println(lookup.getValueOf(objectWeightMinus));
       //      Serial.println();
-      scaleDebug("Picked Up: ", "Object Weight + 1: ", objectWeightMinus);
+//      scaleDebug("Picked Up: ", "Object Weight + 1: ", objectWeightMinus);
       logData( 0, lookup.getValueOf(objectWeightMinus), "pick");
     }
 
@@ -274,15 +267,15 @@ void checkObjects() {
       //      Serial.print("Object Weight + 1: ");
       //      Serial.println(lookup.getValueOf(objectWeightMinus));
       //      Serial.println();
-      scaleDebug("Put Back: ", "Object Weight + 1: ", objectWeightMinus);
+//      scaleDebug("Put Back: ", "Object Weight + 1: ", objectWeightMinus);
       logData( 0, lookup.getValueOf(objectWeightMinus),"put");
     }
     noSingleProducts = false;
 
   }
   else if (noSingleProducts) {
-    Serial.println("unkown weight found");
-    Serial.println();
+//    Serial.println("unkown weight found");
+//    Serial.println();
     if (pickedUp) {
       logData( idWeight, "unknown weight", "pick");
     }
