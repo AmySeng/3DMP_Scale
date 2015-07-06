@@ -1,15 +1,12 @@
 #include "HX711.h"
-/*
 #include <SD.h>
 #include <SPI.h>
 #include <Wire.h>
 #include "RTClib.h"
-*/
 
 #include <HashMap.h>
 #include <EEPROM.h>
 
-/*
 //--setup SD Logging shield
 #define LOG_INTERVAL  1000
 #define SYNC_INTERVAL 1000
@@ -24,12 +21,9 @@ uint32_t m = 0;
 RTC_DS1307 RTC;
 
 const int chipSelect = 10;
-*/
-
 
 //--setup Scale
 HX711 scale(A2, A3);
-
 
 //float idWeight;
 //const float smallestWeight = 5.4;
@@ -45,78 +39,47 @@ boolean noSingleProducts = false;
 //long lastDebounceTime = 0;
 
 byte eeprom_address = 0;
-/*
-byte singleProducts[] = {
-  1, 3, 7, 9, 20
-};
-*/
-const byte singleProducts_count = 5;
-
 byte products_address;
 byte singleProducts_address;
-/*
-byte products[]  = {
-  20, 20, 1, 3, 3, 3, 7, 7, 7, 9, 9, 1, 1
-};
-*/
+const byte singleProducts_count = 5;
 
-//HashType<byte, char*> hashRawArray[78];
-//HashMap<byte, char*> lookup = HashMap<byte, char*>(hashRawArray, 78);
+byte lookup_address;
+//HashType<byte, char*> hashRawArray[58];
+//HashMap<byte, char*> lookup = HashMap<byte, char*>(hashRawArray, 58);
 
-// File logfile;
+ File logfile;
 
 void setup() {
   Serial.begin(9600);
+
+  createProductArrays();
+
+  // DEBUG product arrays
+  /****
   byte tmp[13];
-  byte sum = 0;
-  byte lookup_cnt = 0;
-  byte product_count = 13;
-
-  // create products array
-  byte products[]  = {
-    20, 20, 1, 3, 3, 3, 7, 7, 7, 9, 9, 1, 1
-  };
-  products_address = eeprom_address;
-  EEPROM.put(products_address, products);
-  eeprom_address += sizeof(products);
-
-  // create single products array
-  byte singleProducts[] = {
-    1, 3, 7, 9, 20
-  };
-  singleProducts_address = eeprom_address;
-  EEPROM.put(singleProducts_address, singleProducts);
-  eeprom_address += sizeof(singleProducts);
-
   Serial.println();
   EEPROM.get(singleProducts_address, tmp);
   for (byte i = 0; i < 5; i++) {
-    //EEPROM.get(singleProducts_address + i, tmp);
     Serial.println(tmp[i]);
   }
-
   Serial.println();
   EEPROM.get(products_address, tmp);
   for (byte i = 0; i < 13; i++) {
-    //EEPROM.get(products_address + i, tmp);
     Serial.println(tmp[i]);
   }
+  ****/
+  
+  createLookupTable();
 
-  char subset[78][10];
-/*
-  for (byte i = 0; i < product_count - 1; i++) {
-    for (byte j = i + 1; j < product_count; j++) {
-      sum = products[i] + products[j];
-      String middle = ", ";
-      String subset_tmp = products[i] + middle + products[j];
-      subset_tmp.toCharArray(subset[lookup_cnt], 10);
-      lookup[lookup_cnt](sum, subset[lookup_cnt]);
-      lookup_cnt++;
-    }
-  }
+  // DEBUG: print lookup table from EEPROM
+  /***
+  HashType<byte, char*> tmp_hashArray[15];
+  HashMap<byte, char*> tmp_lookup = HashMap<byte, char*>(tmp_hashArray, 15);
+  EEPROM.get(lookup_address, tmp_lookup);
+  Serial.println(tmp_lookup.getValueOf(6));
+  ***/
 
-  lookup.debug();
-/*
+
   //---- Logging setup ----//
   // use debugging LEDs
   pinMode(redLEDpin, OUTPUT);
@@ -138,14 +101,12 @@ void setup() {
   scale.set_scale(2280.f);
   scale.tare();
   Serial.println(F("3: done setting up scale"));
-  */
+  
 }
 
 
-
-
 void loop() {
-/*
+
   digitalWrite(greenLEDpin, HIGH);
 
   // log milliseconds since starting
@@ -155,11 +116,63 @@ void loop() {
   //the one function to rule them all.
   detectChange();
   delay(50);
-*/
+
+}
+
+void createProductArrays() {
+  byte products[]  = {
+    20, 20, 3, 3, 3, 7, 7, 7, 12, 12, 1, 1, 1
+  };
+  products_address = eeprom_address;
+  EEPROM.put(products_address, products);
+  eeprom_address += sizeof(products);
+
+  // create single products array
+  byte singleProducts[] = {
+    1, 3, 7, 12, 20
+  };
+  singleProducts_address = eeprom_address;
+  EEPROM.put(singleProducts_address, singleProducts);
+  eeprom_address += sizeof(singleProducts);
+}
+
+void createLookupTable() {
+  HashType<byte, char*> hashRawArray[16];
+  HashMap<byte, char*> lookup = HashMap<byte, char*>(hashRawArray, 16);
+  lookup_address = eeprom_address;
+  
+  char subset_arr[16][8];
+  String subset_tmp;
+  byte sum = 0;
+  byte product_cnt = 13;
+  byte lookup_cnt = 0;
+  String middle = ",";
+  byte tmp_products[13];
+  EEPROM.get(products_address, tmp_products);
+  
+  for (byte i = 0; i < product_cnt - 1; i++) {
+    for (byte j = i + 1; j < product_cnt; j++) {  
+      sum = tmp_products[i] + tmp_products[j];
+      subset_tmp = tmp_products[i] + middle + tmp_products[j];
+      subset_tmp.toCharArray(subset_arr[lookup_cnt], 8);
+      if (lookup.getValueOf(sum) == NULL) {
+        lookup[lookup_cnt](sum, subset_arr[lookup_cnt]);
+        lookup_cnt++;
+      }
+      else {
+        continue;        
+      }
+    }
+  }
+
+  EEPROM.put(lookup_address, lookup);
+  eeprom_address += sizeof(lookup);
+  lookup.debug();
+  Serial.println();
 }
 
 
-/*
+
 
 void detectChange() {
   long lastDebounceTime = 0;
@@ -212,7 +225,9 @@ void checkObjects(float idWeight) {
   byte  objectWeight = byte(idWeight / smallestWeight);
   byte  objectWeightPlus = byte((idWeight / smallestWeight) - 1);
   byte  objectWeightMinus = byte((idWeight / smallestWeight) + 1);
-
+  
+  byte singleProducts[5];
+  EEPROM.get(singleProducts_address, singleProducts);
 
   Serial.print(F("Ratio'd Object Weight: "));
   Serial.println(objectWeight);
@@ -230,7 +245,6 @@ void checkObjects(float idWeight) {
         Serial.println();
         logData( singleProducts[i], "single product", "pick");
         noSingleProducts = false;
-
       }
     }
 
@@ -247,8 +261,12 @@ void checkObjects(float idWeight) {
 
   }
 
-
   // look up values in table
+
+  HashType<byte, char*> tmp_hashArray[16];
+  HashMap<byte, char*> lookup = HashMap<byte, char*>(tmp_hashArray, 16);
+  EEPROM.get(lookup_address, lookup);
+  
   if (noSingleProducts && lookup.getValueOf(objectWeight) != NULL) {
 
     if (pickedUp) {
@@ -445,7 +463,7 @@ void connectToRTC() {
   }
 }
 
-
+/*
 void scaleDebug( char *state, char *objType, byte obj) {
 
   Serial.println(state);
@@ -454,6 +472,7 @@ void scaleDebug( char *state, char *objType, byte obj) {
   Serial.println();
 
 }
-
 */
+
+
 
