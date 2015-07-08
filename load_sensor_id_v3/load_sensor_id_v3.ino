@@ -24,10 +24,14 @@ const int chipSelect = 10;
 
 //--setup Scale
 HX711 scale(A2, A3);
+long lastDebounceTime = 0;
+float measuredWeight, previousMeasuredWeight,
+        totalWeight, previousTotalWeight = 0;
+byte debounceDelay = 250;
+float idWeight;
 
-//float idWeight;
 //const float smallestWeight = 5.4;
-//float pickedUpThresh = -0.1;
+byte weightThresh = 7;
 boolean movedForReal = false;
 boolean pickedUp = false;
 boolean noSingleProducts = false;
@@ -35,8 +39,6 @@ boolean noSingleProducts = false;
 //byte objectWeight = 0;
 //byte objectWeightPlus = 1;
 //byte objectWeightMinus = 1;
-
-//long lastDebounceTime = 0;
 
 byte eeprom_address = 0;
 byte products_address;
@@ -72,12 +74,14 @@ void setup() {
   createLookupTable();
 
   // DEBUG: print lookup table from EEPROM
-  /***
-  HashType<byte, char*> tmp_hashArray[15];
-  HashMap<byte, char*> tmp_lookup = HashMap<byte, char*>(tmp_hashArray, 15);
+  /**
+  HashType<byte, char*> tmp_hashArray[16];
+  HashMap<byte, char*> tmp_lookup = HashMap<byte, char*>(tmp_hashArray, 16);
   EEPROM.get(lookup_address, tmp_lookup);
   Serial.println(tmp_lookup.getValueOf(6));
-  ***/
+  Serial.println(tmp_lookup.getValueOf(10));
+  Serial.println(tmp_lookup.getValueOf(2));
+  **/
 
 
   //---- Logging setup ----//
@@ -97,8 +101,7 @@ void setup() {
   Serial.println(F("2: done setting up logging"));
 
   //---- Scale setup ---//
-  scale.read();
-  scale.set_scale(2280.f);
+  scale.set_scale(441.5f);
   scale.tare();
   Serial.println(F("3: done setting up scale"));
   
@@ -172,20 +175,13 @@ void createLookupTable() {
 }
 
 
-
-
 void detectChange() {
-  long lastDebounceTime = 0;
-  float measuredWeight, previousMeasuredWeight,
-        totalWeight, previousTotalWeight;
-  byte debounceDelay = 250;
-  float idWeight;
+  totalWeight = scale.get_units(10);
+  
+  Serial.print("totalWeight: ");
+  Serial.println(totalWeight);
 
-  totalWeight = scale.get_units(5), 1;
-  //  Serial.println(totalWeight);
-
-  if (totalWeight > previousTotalWeight + 2.0 ||
-      totalWeight < previousTotalWeight - 2.0) {
+  if (abs(totalWeight - previousTotalWeight) > weightThresh) {
     lastDebounceTime = millis();
     movedForReal = true;
   }
@@ -196,7 +192,12 @@ void detectChange() {
       idWeight =  measuredWeight - previousMeasuredWeight;
       Serial.print("idWeight: ");
       Serial.println(idWeight);
-      pickedUp = pick(idWeight);
+      if (idWeight > 0) {
+        pickedUp = true;
+      }
+      else {
+        pickedUp = false;
+      }
 
       // keep positive
       idWeight = abs(idWeight);
@@ -209,6 +210,7 @@ void detectChange() {
   previousTotalWeight = totalWeight;
 }
 
+/*
 boolean pick(float x) {
   if (x > 0) {
     return true;
@@ -217,16 +219,16 @@ boolean pick(float x) {
     return false;
   }
 }
-
+*/
 void checkObjects(float idWeight) {
-  float smallestWeight = 5.4;
+  float smallestWeight = 20;
   //  Serial.println("in checkObjects");
   // compare to the ratio
-  byte  objectWeight = byte(idWeight / smallestWeight);
-  byte  objectWeightPlus = byte((idWeight / smallestWeight) - 1);
-  byte  objectWeightMinus = byte((idWeight / smallestWeight) + 1);
+  float objectWeight = idWeight / smallestWeight;
+  float objectWeightPlus = (idWeight / smallestWeight) - 1;
+  float objectWeightMinus = (idWeight / smallestWeight) + 1;
   
-  byte singleProducts[5];
+  byte singleProducts[singleProducts_count];
   EEPROM.get(singleProducts_address, singleProducts);
 
   Serial.print(F("Ratio'd Object Weight: "));
@@ -234,57 +236,72 @@ void checkObjects(float idWeight) {
   // Serial.println(lookup.getValueOf(objectWeight));
 
   //checking for single products
-
-  //  char singleProduct = '0';
   for (byte i = 0; i < singleProducts_count; i++) {
-
-    if (pickedUp) {
-      if (objectWeight == singleProducts[i]) {
+    if (abs(singleProducts[i] - objectWeight) < 0.5) {
+      if (pickedUp) {
         Serial.print(F("Single Product Picked Up: "));
         Serial.println(singleProducts[i]);
         Serial.println();
         logData( singleProducts[i], "single product", "pick");
         noSingleProducts = false;
       }
-    }
-
-    else {
-      if ( objectWeight == singleProducts[i]) {
+      else {
         Serial.print(F("Single Product Put Back: "));
         Serial.println(singleProducts[i]);
         Serial.println();
         logData( singleProducts[i], "single product", "put");
         noSingleProducts = false;
-
       }
+      return;
     }
-
   }
+  //noSingleProducts = true;
 
   // look up values in table
 
   HashType<byte, char*> tmp_hashArray[16];
-  HashMap<byte, char*> lookup = HashMap<byte, char*>(tmp_hashArray, 16);
-  EEPROM.get(lookup_address, lookup);
+  HashMap<byte, char*> tmp_lookup = HashMap<byte, char*>(tmp_hashArray, 16);
+  EEPROM.get(lookup_address, tmp_lookup);
+  Serial.println(tmp_lookup.getValueOf(6));
+  Serial.println(tmp_lookup.getValueOf(10));
+  Serial.println(tmp_lookup.getValueOf(2));
   
-  if (noSingleProducts && lookup.getValueOf(objectWeight) != NULL) {
+  byte byte_weight = byte(objectWeight);
+  Serial.print("ROUNDED WEIGHT: ");
+  Serial.println(byte_weight);
+  char *subset, *subsetMinus, *subsetPlus;
+
+
+/*
+  if (subset != NULL ||
+      subsetMinus != NULL ||
+      subsetPlus != NULL) {
 
     if (pickedUp) {
       //      scaleDebug("Picked Up: ", "Object Weight: ", objectWeight);
-      logData( 0, lookup.getValueOf(objectWeight), "pick");
+      Serial.print(F("Two Products Picked Up: "));
+      if (subset != NULL) { Serial.println(subset); }
+      else if (subsetMinus != NULL) { Serial.println(subsetMinus); }
+      else if (subsetPlus != NULL) { Serial.println(subsetPlus); }
+      Serial.println();
+      //logData( 0, lookup.getValueOf(objectWeight), "pick");
+      //logData( singleProducts[i], "single product", "pick");
     }
-
 
     else {
       //      scaleDebug("Put Back: ", "Object Weight: ", objectWeight);
-      logData( 0, lookup.getValueOf(objectWeight), "put");
-
+      logData( 0, tmp_lookup.getValueOf(objectWeight), "put");
+      Serial.print(F("Two Products Put Back: "));
+      if (subset != NULL) { Serial.println(subset); }
+      else if (subsetMinus != NULL) { Serial.println(subsetMinus); }
+      else if (subsetPlus != NULL) { Serial.println(subsetPlus); }
+      Serial.println();
     }
-    noSingleProducts = false;
+    //noSingleProducts = false;
   }
-
-
-  else if (noSingleProducts && lookup.getValueOf(objectWeightPlus) != NULL) {
+*/
+/*
+  else if (lookup.getValueOf(objectWeightPlus) != NULL) {
 
     if (pickedUp) {
       //      scaleDebug("Picked Up: ", "Object Weight - 1: ", objectWeightPlus);
@@ -297,7 +314,7 @@ void checkObjects(float idWeight) {
     }
     noSingleProducts = false;
   }
-  else if ( noSingleProducts && lookup.getValueOf(objectWeightMinus) != NULL) {
+  else if (lookup.getValueOf(objectWeightMinus) != NULL) {
     if (pickedUp) {
       //      scaleDebug("Picked Up: ", "Object Weight + 1: ", objectWeightMinus);
       logData( 0, lookup.getValueOf(objectWeightMinus), "pick");
@@ -310,19 +327,22 @@ void checkObjects(float idWeight) {
     noSingleProducts = false;
 
   }
-  else if (noSingleProducts) {
+*/
+  else {
     //    Serial.println("unkown weight found");
     //    Serial.println();
     if (pickedUp) {
+      Serial.println("unknown weight picked up");
       logData( idWeight, "unknown weight", "pick");
     }
     else {
+      Serial.println("unknown weight put back");
       logData( idWeight, "unknown weight", "put");
     }
 
   }
 
-  noSingleProducts = true;
+//  noSingleProducts = true;
 
   //  Serial.println("check objects");
 }
@@ -374,6 +394,7 @@ void logData( byte single, char *str, char *stat) {
   Serial.print(now.minute(), DEC);
   Serial.print(F(":"));
   Serial.print(now.second(), DEC);
+  Serial.println();
 #endif //ECHO_TO_SERIAL
 
   logfile.print(", ");
